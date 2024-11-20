@@ -1,3 +1,6 @@
 torch
 torchvision
 tqdm
+pandas 
+numpy 
+matplotlib

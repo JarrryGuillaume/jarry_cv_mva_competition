@@ -88,7 +88,7 @@ def train(
     train_loader: torch.utils.data.DataLoader,
     use_cuda: bool,
     epoch: int,
-    args: argparse.ArgumentParser,
+    log_interval: argparse.ArgumentParser,
 ) -> None:
     """Default Training Loop.
 
@@ -113,7 +113,7 @@ def train(
         optimizer.step()
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
-        if batch_idx % args.log_interval == 0:
+        if batch_idx % log_interval == 0:
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
@@ -173,23 +173,32 @@ def validation(
     return validation_loss
 
 
-def main():
+def main(data_folder="../mva-recvis-2024", 
+    experiment_folder="../experiment",
+    model_name="basic",
+    batch_size=32 ,
+    num_workers=4,
+    momentum=0.5,
+    epochs=100,
+    seed=42,
+    lr=1e-3,
+    log_interval=10):
     """Default Main Function."""
     # options
-    args = opts()
+    
 
     # Check if cuda is available
     use_cuda = torch.cuda.is_available()
 
     # Set the seed (for reproducibility)
-    torch.manual_seed(args.seed)
+    torch.manual_seed(seed)
 
     # Create experiment folder
-    if not os.path.isdir(args.experiment):
-        os.makedirs(args.experiment)
+    if not os.path.isdir(experiment_folder):
+        os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(args.model_name).get_all()
+    model, data_transforms = ModelFactory(model_name).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
@@ -198,40 +207,40 @@ def main():
 
     # Data initialization and loading
     train_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(args.data + "/train_images", transform=data_transforms),
-        batch_size=args.batch_size,
+        datasets.ImageFolder(data_folder + "/train_images", transform=data_transforms),
+        batch_size=batch_size,
         shuffle=True,
-        num_workers=args.num_workers,
+        num_workers=num_workers,
     )
     val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(args.data + "/val_images", transform=data_transforms),
-        batch_size=args.batch_size,
+        datasets.ImageFolder(data_folder + "/val_images", transform=data_transforms),
+        batch_size=batch_size,
         shuffle=False,
-        num_workers=args.num_workers,
+        num_workers=num_workers,
     )
 
     # Setup optimizer
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
     # Loop over the epochs
     best_val_loss = 1e8
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(1, epochs + 1):
         # training loop
-        train(model, optimizer, train_loader, use_cuda, epoch, args)
+        train(model, optimizer, train_loader, use_cuda, epoch, log_interval)
         # validation loop
         val_loss = validation(model, val_loader, use_cuda)
         if val_loss < best_val_loss:
             # save the best model for validation
             best_val_loss = val_loss
-            best_model_file = args.experiment + "/model_best.pth"
+            best_model_file = f"{experiment_folder}/best_{model_name}.pth"
             torch.save(model.state_dict(), best_model_file)
         # also save the model every epoch
-        model_file = args.experiment + "/model_" + str(epoch) + ".pth"
+        model_file = experiment_folder + "/model_" + str(epoch) + ".pth"
         torch.save(model.state_dict(), model_file)
         print(
             "Saved model to "
             + model_file
-            + f". You can run `python evaluate.py --model_name {args.model_name} --model "
+            + f". You can run `python evaluate.py --model_name {model_name} --model "
             + best_model_file
             + "` to generate the Kaggle formatted csv file\n"
         )

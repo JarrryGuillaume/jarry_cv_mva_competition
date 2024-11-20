@@ -11,13 +11,13 @@ class ModelFactory:
         self.transform = self.init_transform()
 
     def init_model(self):
-        if self.model_name == "basic_cnn":
+        if self.model_name == "basic":
             return Net()
         else:
             raise NotImplementedError("Model not implemented")
 
     def init_transform(self):
-        if self.model_name == "basic_cnn":
+        if self.model_name == "basic":
             return data_transforms
         else:
             raise NotImplementedError("Transform not implemented")
