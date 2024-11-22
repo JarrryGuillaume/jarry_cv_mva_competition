@@ -248,12 +248,12 @@ def main(data_folder="../mva_competition",
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model_file = f"{experiment_folder}/best_{model_name}.pth"
-            torch.save(model, best_model_file)
+            torch.save(model.state_dict(), best_model_file)
 
         # Save model periodically
         if epoch % saving_frequency == 0:
             model_file = experiment_folder + f"/model_{epoch}.pth"
-            torch.save(model, model_file)
+            torch.save(model.state_dict(), model_file)
     
     # plt.show()  # Keep the plot open after training is complete
 

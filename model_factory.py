@@ -26,34 +26,50 @@ class ModelFactory:
         self.transform = self.init_transform()
 
     def init_model(self):
-        assert os.path.exists(self.model_path), (
-            "Please download the VGG model yourself from the following link and save it locally: "
-            "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK", 
-            "If you want to use AlexNet, download this one"
-            "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
-        )
-        model = torch.load(self.model_path, map_location=self.map_location)
-        if isinstance(model, torch.nn.DataParallel):
-            model = model.module  
-
         if self.model_name == "basic":
             return Net()
+        elif "resnet50" in self.model_name:
+            print("Using the ResNet50 architecture.")
+            model = torchvision.models.resnet50(pretrained=False)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
-        if self.fine_tune:
-            if "vgg16" in self.model_name:
-                # Freeze all layers initially
+            state_dict = checkpoint["state_dict"]
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+            model.load_state_dict(state_dict=state_dict)
+
+            if self.fine_tune:
+                num_features = model.fc.in_features
+                model.fc = torch.nn.Linear(num_features, self.num_classes)
+
+            if self.use_cuda:
+                model = torch.nn.DataParallel(model).cuda()
+            return model
+
+        elif "vgg16" in self.model_name:
+
+            print("Using the VGG-16 architecture.")
+            assert os.path.exists(self.model_path), (
+                "Please download the VGG model yourself from the following link and save it locally: "
+                "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK"
+            )
+
+            model = torchvision.models.vgg16(pretrained=False)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
+
+            state_dict = checkpoint["state_dict"]
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+            model.load_state_dict(state_dict=state_dict)
+
+            if self.fine_tune: 
                 for name, param in model.named_parameters():
                     param.requires_grad = False
 
-                # Unwrap features if it is also wrapped in DataParallel
-                features_module = model.features
-                if isinstance(features_module, torch.nn.DataParallel):
-                    features_module = features_module.module
-
-                # Unfreeze specified layers in the features module
-                for layer in self.tuning_layers:
-                    print(f"layers modified: {layer}")
-                    features_module[layer].requires_grad_(True)
+                # Unfreeze layers 26 and 28 in the features module
+                for layer in self.tuning_layers: 
+                    print(f"layers modified : {layer}")
+                    model.features[layer].requires_grad_(True)
 
                 # Unfreeze the last three linear layers in the classifier
                 for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
@@ -63,23 +79,37 @@ class ModelFactory:
                 num_features = model.classifier[6].in_features
                 model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
-            elif "resnet50" in self.model_name:
-                # Replace the final fully connected layer for fine-tuning
-                num_features = model.fc.in_features
-                model.fc = torch.nn.Linear(num_features, self.num_classes)
+            if self.use_cuda:
+                model.features = torch.nn.DataParallel(model.features).cuda()
+                model = torch.nn.DataParallel(model).cuda()
+            return model
 
-            elif "alexnet" in self.model_name:
-                # Replace the final classifier layer for fine-tuning
+        elif "alexnet" in self.model_name:
+            print("Using the AlexNet architecture.")
+            assert os.path.exists(self.model_path), (
+                "Please download the AlexNet model yourself from the following link and save it locally: "
+                "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
+            )
+
+            model = torchvision.models.alexnet(pretrained=False)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
+
+            state_dict = checkpoint["state_dict"]
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+            model.load_state_dict(state_dict=state_dict)
+
+            if self.fine_tune: 
                 num_features = model.classifier[6].in_features
                 model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
-            else:
-                raise NotImplementedError("Model not implemented")
 
-        if self.use_cuda:
-            model = torch.nn.DataParallel(model).cuda()
-        
-        return model
+            if self.use_cuda:
+                model.features = torch.nn.DataParallel(model.features).cuda()
+                model = torch.nn.DataParallel(model).cuda()
+            return model
 
+        else:
+            raise NotImplementedError("Model not implemented")
 
     def init_transform(self):
         data_transforms = {
@@ -88,8 +118,7 @@ class ModelFactory:
                 transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
                 transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
                 transforms.RandomRotation(degrees=15),
-                transforms.RandomRotation(degrees=30),
-                transforms.RandomRotation(degrees=45),  
+                transforms.RandomRotation(degrees=30),       # Small random rotations for variability
                 transforms.ToTensor(),                       # Convert to PyTorch tensor
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize
             ]),
