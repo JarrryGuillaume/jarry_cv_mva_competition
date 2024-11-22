@@ -1,5 +1,5 @@
 """Python file to instantite the model and the transform that goes with it."""
-
+from torchvision import transforms
 from data import data_transforms
 from model import Net
 import torch
@@ -106,6 +106,22 @@ class ModelFactory:
             raise NotImplementedError("Model not implemented")
 
     def init_transform(self):
+        data_transforms = {
+            "train": transforms.Compose([
+                transforms.Resize((256, 256)),                # Ensure consistent input size
+                transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
+                transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
+                transforms.RandomRotation(degrees=15),
+                transforms.RandomRotation(degrees=30),       # Small random rotations for variability
+                transforms.ToTensor(),                       # Convert to PyTorch tensor
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize
+            ]),
+            "val": transforms.Compose([
+                transforms.Resize((224, 224)),               # Resize directly for validation
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]),
+        }
         return data_transforms        
 
     def get_model(self):
