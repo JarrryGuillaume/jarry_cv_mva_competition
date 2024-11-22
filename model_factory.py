@@ -8,10 +8,11 @@ import os
 from torch.utils import model_zoo
 
 class ModelFactory:
-    def __init__(self, model_name, model_path: str, num_classes=500):
+    def __init__(self, model_name, model_path: str, fine_tune=True, num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.num_classes = num_classes
+        self.fine_tune = fine_tune
         
         if torch.cuda.is_available(): 
             self.use_cuda = True
@@ -36,8 +37,9 @@ class ModelFactory:
 
             model.load_state_dict(state_dict=state_dict)
 
-            num_features = model.fc.in_features
-            model.fc = torch.nn.Linear(num_features, self.num_classes)
+            if self.fine_tune:
+                num_features = model.fc.in_features
+                model.fc = torch.nn.Linear(num_features, self.num_classes)
 
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
@@ -59,20 +61,21 @@ class ModelFactory:
 
             model.load_state_dict(state_dict=state_dict)
 
-            for name, param in model.named_parameters():
-                param.requires_grad = False
+            if self.fine_tune: 
+                for name, param in model.named_parameters():
+                    param.requires_grad = False
 
-            # Unfreeze layers 26 and 28 in the features module
-            model.features[26].requires_grad_(True)
-            model.features[28].requires_grad_(True)
+                # Unfreeze layers 26 and 28 in the features module
+                model.features[26].requires_grad_(True)
+                model.features[28].requires_grad_(True)
 
-            # Unfreeze the last three linear layers in the classifier
-            for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
-                model.classifier[i].requires_grad_(True)
+                # Unfreeze the last three linear layers in the classifier
+                for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
+                    model.classifier[i].requires_grad_(True)
 
-            # Replace the classifier output layer
-            num_features = model.classifier[6].in_features
-            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
+                # Replace the classifier output layer
+                num_features = model.classifier[6].in_features
+                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
             if self.use_cuda:
                 model.features = torch.nn.DataParallel(model.features).cuda()
@@ -94,8 +97,9 @@ class ModelFactory:
 
             model.load_state_dict(state_dict=state_dict)
 
-            num_features = model.classifier[6].in_features
-            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
+            if self.fine_tune: 
+                num_features = model.classifier[6].in_features
+                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
             if self.use_cuda:
                 model.features = torch.nn.DataParallel(model.features).cuda()

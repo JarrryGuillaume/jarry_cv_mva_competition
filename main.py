@@ -153,7 +153,8 @@ def main(data_folder="../mva_competition",
             seed=42,
             lr=1e-3,
             saving_frequency=5,
-            log_interval=10):
+            log_interval=10, 
+            fine_tune=True):
     """Default Main Function."""
     # Check if cuda is available
     use_cuda = torch.cuda.is_available()
@@ -166,7 +167,7 @@ def main(data_folder="../mva_competition",
         os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_path).get_all()
+    model, data_transforms = ModelFactory(model_name, model_path, fine_tune=fine_tune).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
@@ -208,8 +209,8 @@ def main(data_folder="../mva_competition",
         val_losses.append(val_loss)
         val_accuracies.append(val_accuracy)
 
-        print(f"Epoch : {epoch}, Training accuracy : {train_accuracy}")
-        print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy}")
+        print(f"Epoch : {epoch}, Training accuracy : {train_accuracy} %")
+        print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy} %")
 
         # Update graphs
         ax1.clear()
