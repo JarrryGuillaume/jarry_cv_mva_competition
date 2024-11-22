@@ -173,16 +173,16 @@ def validation(
     return validation_loss
 
 
-def main(data_folder="../mva-recvis-2024", 
-    experiment_folder="../experiment",
-    model_name="basic",
-    batch_size=32 ,
-    num_workers=4,
-    momentum=0.5,
-    epochs=100,
-    seed=42,
-    lr=1e-3,
-    log_interval=10):
+def main(data_folder="../mva_competition", 
+            experiment_folder="../experiment",
+            model_name="basic",
+            batch_size=32 ,
+            num_workers=4,
+            momentum=0.5,
+            epochs=100,
+            seed=42,
+            lr=1e-3,
+            log_interval=10):
     """Default Main Function."""
     # options
     
