@@ -28,15 +28,10 @@ class ModelFactory:
     def init_model(self):
         if self.model_name == "basic":
             return Net()
+        
         elif "resnet50" in self.model_name:
             print("Using the ResNet50 architecture.")
-            model = torchvision.models.resnet50(pretrained=False)
-            checkpoint = torch.load(self.model_path, map_location=self.map_location)
-
-            state_dict = checkpoint["state_dict"]
-            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-
-            model.load_state_dict(state_dict=state_dict)
+            model = torch.load(self.model_path, map_location=self.map_location)
 
             if self.fine_tune:
                 num_features = model.fc.in_features
@@ -53,14 +48,7 @@ class ModelFactory:
                 "Please download the VGG model yourself from the following link and save it locally: "
                 "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK"
             )
-
-            model = torchvision.models.vgg16(pretrained=False)
-            checkpoint = torch.load(self.model_path, map_location=self.map_location)
-
-            state_dict = checkpoint["state_dict"]
-            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-
-            model.load_state_dict(state_dict=state_dict)
+            model = torch.load(self.model_path, map_location=self.map_location)
 
             if self.fine_tune: 
                 for name, param in model.named_parameters():
@@ -90,14 +78,7 @@ class ModelFactory:
                 "Please download the AlexNet model yourself from the following link and save it locally: "
                 "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
             )
-
-            model = torchvision.models.alexnet(pretrained=False)
-            checkpoint = torch.load(self.model_path, map_location=self.map_location)
-
-            state_dict = checkpoint["state_dict"]
-            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-
-            model.load_state_dict(state_dict=state_dict)
+            model = torch.load(self.model_path, map_location=self.map_location)
 
             if self.fine_tune: 
                 num_features = model.classifier[6].in_features
