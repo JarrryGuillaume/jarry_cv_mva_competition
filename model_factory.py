@@ -8,11 +8,12 @@ import os
 from torch.utils import model_zoo
 
 class ModelFactory:
-    def __init__(self, model_name, model_path: str, fine_tune=True, num_classes=500):
+    def __init__(self, model_name, model_path: str, tuning_layers, fine_tune=True,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.num_classes = num_classes
         self.fine_tune = fine_tune
+        self.tuning_layers = tuning_layers
         
         if torch.cuda.is_available(): 
             self.use_cuda = True
@@ -66,8 +67,9 @@ class ModelFactory:
                     param.requires_grad = False
 
                 # Unfreeze layers 26 and 28 in the features module
-                model.features[26].requires_grad_(True)
-                model.features[28].requires_grad_(True)
+                for layer in self.tuning_layers: 
+                    print(f"layers modified : {layer}")
+                    model.features[layer].requires_grad_(True)
 
                 # Unfreeze the last three linear layers in the classifier
                 for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
