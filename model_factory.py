@@ -38,39 +38,48 @@ class ModelFactory:
 
         if self.model_name == "basic":
             return Net()
-        
-        elif "resnet50" in self.model_name and self.fine_tune:
-            num_features = model.fc.in_features
-            model.fc = torch.nn.Linear(num_features, self.num_classes)
 
-        elif "vgg16" in self.model_name and self.fine_tune:
-            for name, param in model.named_parameters():
-                param.requires_grad = False
+        if self.fine_tune:
+            if "vgg16" in self.model_name:
+                # Freeze all layers initially
+                for name, param in model.named_parameters():
+                    param.requires_grad = False
 
-            # Unfreeze layers 26 and 28 in the features module
-            for layer in self.tuning_layers: 
-                print(f"layers modified : {layer}")
-                model.features[layer].requires_grad_(True)
+                # Unwrap features if it is also wrapped in DataParallel
+                features_module = model.features
+                if isinstance(features_module, torch.nn.DataParallel):
+                    features_module = features_module.module
 
-            # Unfreeze the last three linear layers in the classifier
-            for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
-                model.classifier[i].requires_grad_(True)
+                # Unfreeze specified layers in the features module
+                for layer in self.tuning_layers:
+                    print(f"layers modified: {layer}")
+                    features_module[layer].requires_grad_(True)
 
-            # Replace the classifier output layer
-            num_features = model.classifier[6].in_features
-            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
+                # Unfreeze the last three linear layers in the classifier
+                for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
+                    model.classifier[i].requires_grad_(True)
 
-        elif "alexnet" in self.model_name and self.fine_tune: 
-            num_features = model.classifier[6].in_features
-            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
-        else:
-            raise NotImplementedError("Model not implemented")
-        
+                # Replace the classifier output layer
+                num_features = model.classifier[6].in_features
+                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
+
+            elif "resnet50" in self.model_name:
+                # Replace the final fully connected layer for fine-tuning
+                num_features = model.fc.in_features
+                model.fc = torch.nn.Linear(num_features, self.num_classes)
+
+            elif "alexnet" in self.model_name:
+                # Replace the final classifier layer for fine-tuning
+                num_features = model.classifier[6].in_features
+                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
+            else:
+                raise NotImplementedError("Model not implemented")
+
         if self.use_cuda:
-            model.features = torch.nn.DataParallel(model.features).cuda()
             model = torch.nn.DataParallel(model).cuda()
-    
+        
         return model
+
 
     def init_transform(self):
         data_transforms = {
