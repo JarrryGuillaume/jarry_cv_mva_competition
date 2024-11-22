@@ -110,7 +110,16 @@ def train(
         
         # Optionally log detailed info (comment out for cleaner output)
         if batch_idx % log_interval == 0:
-            pass
+            if batch_idx % log_interval == 0:
+                print(
+                    "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                        epoch,
+                        batch_idx * len(data),
+                        len(train_loader.dataset),
+                        100.0 * batch_idx / len(train_loader),
+                        loss.data.item(),
+                    )
+                )
 
     avg_loss = total_loss / len(train_loader)
     accuracy = 100.0 * correct / len(train_loader.dataset)
@@ -193,7 +202,7 @@ def main(data_folder="../mva_competition",
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
     # Plot setup
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
 
@@ -214,26 +223,26 @@ def main(data_folder="../mva_competition",
         print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy} %")
 
         # Update graphs
-        clear_output(wait=True)
+        # clear_output(wait=True)
     
-        ax1.clear()
-        ax2.clear()
-        ax1.plot([i for i in range(1, epoch + 1)], train_losses, label="Train Loss")
-        ax1.plot([i for i in range(1, epoch + 1)], val_losses, label="Validation Loss")
-        ax1.set_title("Loss Over Epochs")
-        ax1.set_xlabel("Epoch")
-        ax1.set_ylabel("Loss")
-        ax1.legend()
+        # ax1.clear()
+        # ax2.clear()
+        # ax1.plot([i for i in range(1, epoch + 1)], train_losses, label="Train Loss")
+        # ax1.plot([i for i in range(1, epoch + 1)], val_losses, label="Validation Loss")
+        # ax1.set_title("Loss Over Epochs")
+        # ax1.set_xlabel("Epoch")
+        # ax1.set_ylabel("Loss")
+        # ax1.legend()
 
-        ax2.plot([i for i in range(1, epoch + 1)], train_accuracies, label="Train Accuracy")
-        ax2.plot([i for i in range(1, epoch + 1)], val_accuracies, label="Validation Accuracy")
-        ax2.set_title("Accuracy Over Epochs")
-        ax2.set_xlabel("Epoch")
-        ax2.set_ylabel("Accuracy (%)")
-        ax2.legend()
+        # ax2.plot([i for i in range(1, epoch + 1)], train_accuracies, label="Train Accuracy")
+        # ax2.plot([i for i in range(1, epoch + 1)], val_accuracies, label="Validation Accuracy")
+        # ax2.set_title("Accuracy Over Epochs")
+        # ax2.set_xlabel("Epoch")
+        # ax2.set_ylabel("Accuracy (%)")
+        # ax2.legend()
 
-        plt.tight_layout()
-        plt.pause(0.01)  # Pause to update the graph dynamically
+        # plt.tight_layout()
+        # plt.pause(0.01)  # Pause to update the graph dynamically
 
         # Save best model
         if val_loss < best_val_loss:
@@ -246,7 +255,7 @@ def main(data_folder="../mva_competition",
             model_file = experiment_folder + f"/model_{epoch}.pth"
             torch.save(model, model_file)
     
-    plt.show()  # Keep the plot open after training is complete
+    # plt.show()  # Keep the plot open after training is complete
 
 
 if __name__ == "__main__":
