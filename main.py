@@ -154,7 +154,8 @@ def main(data_folder="../mva_competition",
             lr=1e-3,
             saving_frequency=5,
             log_interval=10, 
-            fine_tune=True):
+            fine_tune=True, 
+            tuning_layers=None):
     """Default Main Function."""
     # Check if cuda is available
     use_cuda = torch.cuda.is_available()
@@ -167,7 +168,7 @@ def main(data_folder="../mva_competition",
         os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_path, fine_tune=fine_tune).get_all()
+    model, data_transforms = ModelFactory(model_name, model_path, tuning_layers, fine_tune=fine_tune).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
