@@ -8,8 +8,9 @@ import os
 from torch.utils import model_zoo
 
 class ModelFactory:
-    def __init__(self, model_name: str, num_classes=500):
+    def __init__(self, model_name, model_path: str, num_classes=500):
         self.model_name = model_name
+        self.model_path = model_path
         self.num_classes = num_classes
         
         if torch.cuda.is_available(): 
@@ -26,15 +27,9 @@ class ModelFactory:
         if self.model_name == "basic":
             return Net()
         elif "resnet50" in self.model_name:
-            model_paths = {
-                'resnet50_trained_on_SIN': '../models/resnet50_train_60.pth',
-                'resnet50_trained_on_SIN_and_IN': '../models/resnet50_train_45_epochs_combined_IN_SF.pth',
-                'resnet50_trained_on_SIN_and_IN_then_finetuned_on_IN': '../models/resnet50_finetune_60_epochs_lr_decay_after_30_start_resnet50_train_45_epochs_combined_IN_SF.pth',
-            }
-
             print("Using the ResNet50 architecture.")
             model = torchvision.models.resnet50(pretrained=False)
-            checkpoint = torch.load(model_paths[self.model_name], map_location=self.map_location)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
             if not self.use_cuda:
@@ -50,17 +45,15 @@ class ModelFactory:
             return model
 
         elif "vgg16" in self.model_name:
-            model_path = '../models/vgg16_train_60_epochs.pth'
 
             print("Using the VGG-16 architecture.")
-            filepath = model_path
-            assert os.path.exists(filepath), (
+            assert os.path.exists(self.model_path), (
                 "Please download the VGG model yourself from the following link and save it locally: "
                 "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK"
             )
 
             model = torchvision.models.vgg16(pretrained=False)
-            checkpoint = torch.load(filepath, map_location=self.map_location)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
             if not self.use_cuda:
@@ -89,18 +82,14 @@ class ModelFactory:
             return model
 
         elif "alexnet" in self.model_name:
-            model_paths = '../models/alexnet_train_60_epochs.pth'
-
             print("Using the AlexNet architecture.")
-            filepath = model_paths[self.model_name]
-            
-            assert os.path.exists(filepath), (
+            assert os.path.exists(self.model_path), (
                 "Please download the AlexNet model yourself from the following link and save it locally: "
                 "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
             )
 
             model = torchvision.models.alexnet(pretrained=False)
-            checkpoint = torch.load(filepath, map_location=self.map_location)
+            checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
             if not self.use_cuda:

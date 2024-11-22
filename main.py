@@ -176,6 +176,7 @@ def validation(
 def main(data_folder="../mva_competition", 
             experiment_folder="../experiment",
             model_name="basic",
+            model_path=None, 
             batch_size=32 ,
             num_workers=4,
             momentum=0.5,
@@ -198,7 +199,7 @@ def main(data_folder="../mva_competition",
         os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name).get_all()
+    model, data_transforms = ModelFactory(model_name, model_path).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
