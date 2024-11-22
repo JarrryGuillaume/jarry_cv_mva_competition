@@ -32,8 +32,7 @@ class ModelFactory:
             checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
-            if not self.use_cuda:
-                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 
             model.load_state_dict(state_dict=state_dict)
 
@@ -56,8 +55,7 @@ class ModelFactory:
             checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
-            if not self.use_cuda:
-                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 
             model.load_state_dict(state_dict=state_dict)
 
@@ -92,8 +90,7 @@ class ModelFactory:
             checkpoint = torch.load(self.model_path, map_location=self.map_location)
 
             state_dict = checkpoint["state_dict"]
-            if not self.use_cuda:
-                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 
             model.load_state_dict(state_dict=state_dict)
 
