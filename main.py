@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets
-
+from IPython.display import clear_output
 from model_factory import ModelFactory
 
 
@@ -213,6 +213,8 @@ def main(data_folder="../mva_competition",
         print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy} %")
 
         # Update graphs
+        clear_output(wait=True)
+    
         ax1.clear()
         ax2.clear()
         ax1.plot([i for i in range(1, epoch + 1)], train_losses, label="Train Loss")
