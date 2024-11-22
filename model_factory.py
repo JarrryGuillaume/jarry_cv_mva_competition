@@ -26,71 +26,51 @@ class ModelFactory:
         self.transform = self.init_transform()
 
     def init_model(self):
+        assert os.path.exists(self.model_path), (
+            "Please download the VGG model yourself from the following link and save it locally: "
+            "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK", 
+            "If you want to use AlexNet, download this one"
+            "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
+        )
+        model = torch.load(self.model_path, map_location=self.map_location)
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module  
+
         if self.model_name == "basic":
             return Net()
         
-        elif "resnet50" in self.model_name:
-            print("Using the ResNet50 architecture.")
-            model = torch.load(self.model_path, map_location=self.map_location)
+        elif "resnet50" in self.model_name and self.fine_tune:
+            num_features = model.fc.in_features
+            model.fc = torch.nn.Linear(num_features, self.num_classes)
 
-            if self.fine_tune:
-                num_features = model.fc.in_features
-                model.fc = torch.nn.Linear(num_features, self.num_classes)
+        elif "vgg16" in self.model_name and self.fine_tune:
+            for name, param in model.named_parameters():
+                param.requires_grad = False
 
-            if self.use_cuda:
-                model = torch.nn.DataParallel(model).cuda()
-            return model
+            # Unfreeze layers 26 and 28 in the features module
+            for layer in self.tuning_layers: 
+                print(f"layers modified : {layer}")
+                model.features[layer].requires_grad_(True)
 
-        elif "vgg16" in self.model_name:
+            # Unfreeze the last three linear layers in the classifier
+            for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
+                model.classifier[i].requires_grad_(True)
 
-            print("Using the VGG-16 architecture.")
-            assert os.path.exists(self.model_path), (
-                "Please download the VGG model yourself from the following link and save it locally: "
-                "https://drive.google.com/drive/folders/1A0vUWyU6fTuc-xWgwQQeBvzbwi6geYQK"
-            )
-            model = torch.load(self.model_path, map_location=self.map_location)
+            # Replace the classifier output layer
+            num_features = model.classifier[6].in_features
+            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
-            if self.fine_tune: 
-                for name, param in model.named_parameters():
-                    param.requires_grad = False
-
-                # Unfreeze layers 26 and 28 in the features module
-                for layer in self.tuning_layers: 
-                    print(f"layers modified : {layer}")
-                    model.features[layer].requires_grad_(True)
-
-                # Unfreeze the last three linear layers in the classifier
-                for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
-                    model.classifier[i].requires_grad_(True)
-
-                # Replace the classifier output layer
-                num_features = model.classifier[6].in_features
-                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
-
-            if self.use_cuda:
-                model.features = torch.nn.DataParallel(model.features).cuda()
-                model = torch.nn.DataParallel(model).cuda()
-            return model
-
-        elif "alexnet" in self.model_name:
-            print("Using the AlexNet architecture.")
-            assert os.path.exists(self.model_path), (
-                "Please download the AlexNet model yourself from the following link and save it locally: "
-                "https://drive.google.com/drive/u/0/folders/1GnxcR6HUyPfRWAmaXwuiMdAMKlL1shTn"
-            )
-            model = torch.load(self.model_path, map_location=self.map_location)
-
-            if self.fine_tune: 
-                num_features = model.classifier[6].in_features
-                model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
-
-            if self.use_cuda:
-                model.features = torch.nn.DataParallel(model.features).cuda()
-                model = torch.nn.DataParallel(model).cuda()
-            return model
-
+        elif "alexnet" in self.model_name and self.fine_tune: 
+            num_features = model.classifier[6].in_features
+            model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
         else:
             raise NotImplementedError("Model not implemented")
+        
+        if self.use_cuda:
+            model.features = torch.nn.DataParallel(model.features).cuda()
+            model = torch.nn.DataParallel(model).cuda()
+    
+        return model
 
     def init_transform(self):
         data_transforms = {
@@ -99,7 +79,8 @@ class ModelFactory:
                 transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
                 transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
                 transforms.RandomRotation(degrees=15),
-                transforms.RandomRotation(degrees=30),       # Small random rotations for variability
+                transforms.RandomRotation(degrees=30),
+                transforms.RandomRotation(degrees=45),  
                 transforms.ToTensor(),                       # Convert to PyTorch tensor
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize
             ]),
