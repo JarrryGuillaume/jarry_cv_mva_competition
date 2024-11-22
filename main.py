@@ -208,6 +208,9 @@ def main(data_folder="../mva_competition",
         val_losses.append(val_loss)
         val_accuracies.append(val_accuracy)
 
+        print(f"Epoch : {epoch}, Training accuracy : {train_accuracy}")
+        print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy}")
+
         # Update graphs
         ax1.clear()
         ax2.clear()
