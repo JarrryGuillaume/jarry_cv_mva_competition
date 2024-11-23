@@ -118,6 +118,10 @@ class ModelFactory:
                 # Replace the classification head
                 num_features = model.head.in_features
                 model.head = torch.nn.Linear(num_features, self.num_classes)
+
+                for block in model.blocks[-self.tuning_layers:]:
+                    for param in block.parameters():
+                        param.requires_grad = True
             
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
