@@ -6,6 +6,7 @@ import torch
 import torchvision
 import os
 from torch.utils import model_zoo
+import timm
 
 class ModelFactory:
     def __init__(self, model_name, model_path: str, tuning_layers, fine_tune=True,  num_classes=500):
@@ -107,28 +108,60 @@ class ModelFactory:
                 model.features = torch.nn.DataParallel(model.features).cuda()
                 model = torch.nn.DataParallel(model).cuda()
             return model
-
+    
+        elif "vit" in self.model_name.lower():
+            print("Using the Vision Transformer architecture.")
+            # Load the pre-trained ViT-B/16 model pre-trained on ImageNet-21k
+            model = timm.create_model('vit_base_patch16_224_in21k', pretrained=True)
+            
+            if self.fine_tune:
+                # Replace the classification head
+                num_features = model.head.in_features
+                model.head = torch.nn.Linear(num_features, self.num_classes)
+            
+            if self.use_cuda:
+                model = torch.nn.DataParallel(model).cuda()
+            return model
+        
         else:
             raise NotImplementedError("Model not implemented")
 
     def init_transform(self):
-        data_transforms = {
-            "train": transforms.Compose([
-                transforms.Resize((256, 256)),                # Ensure consistent input size
-                transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
-                transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
-                transforms.RandomRotation(degrees=15),
-                transforms.RandomRotation(degrees=30),       # Small random rotations for variability
-                transforms.ToTensor(),                       # Convert to PyTorch tensor
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize
-            ]),
-            "val": transforms.Compose([
-                transforms.Resize((224, 224)),               # Resize directly for validation
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]),
-        }
-        return data_transforms        
+        if "vit" in self.model_name.lower():
+            data_transforms = {
+                "train": transforms.Compose([
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ]),
+                "val": transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ]),
+            }
+        else:
+            data_transforms = {
+                "train": transforms.Compose([
+                    transforms.Resize((256, 256)),                # Ensure consistent input size
+                    transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
+                    transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
+                    transforms.RandomRotation(degrees=15),
+                    transforms.RandomRotation(degrees=30),       # Small random rotations for variability
+                    transforms.ToTensor(),                       # Convert to PyTorch tensor
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                                        std=[0.229, 0.224, 0.225]),  # Normalize
+                ]),
+                "val": transforms.Compose([
+                    transforms.Resize((224, 224)),               # Resize directly for validation
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                                        std=[0.229, 0.224, 0.225]),
+                ]),
+            }
+        return data_transforms
 
     def get_model(self):
         return self.model

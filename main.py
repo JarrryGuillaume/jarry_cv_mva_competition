@@ -164,6 +164,7 @@ def main(data_folder="../mva_competition",
             saving_frequency=5,
             log_interval=10, 
             fine_tune=True, 
+            optimizer="SGD", 
             tuning_layers=None):
     """Default Main Function."""
     # Check if cuda is available
@@ -199,10 +200,11 @@ def main(data_folder="../mva_competition",
     )
 
     # Setup optimizer
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    if optimizer == "SGD":
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    elif optimizer == "AdamW": 
+        optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
 
-    # Plot setup
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
 
@@ -222,28 +224,6 @@ def main(data_folder="../mva_competition",
         print(f"Epoch : {epoch}, Training accuracy : {train_accuracy} %")
         print(f"Epoch : {epoch}, Validation accuracy : {val_accuracy} %")
 
-        # Update graphs
-        # clear_output(wait=True)
-    
-        # ax1.clear()
-        # ax2.clear()
-        # ax1.plot([i for i in range(1, epoch + 1)], train_losses, label="Train Loss")
-        # ax1.plot([i for i in range(1, epoch + 1)], val_losses, label="Validation Loss")
-        # ax1.set_title("Loss Over Epochs")
-        # ax1.set_xlabel("Epoch")
-        # ax1.set_ylabel("Loss")
-        # ax1.legend()
-
-        # ax2.plot([i for i in range(1, epoch + 1)], train_accuracies, label="Train Accuracy")
-        # ax2.plot([i for i in range(1, epoch + 1)], val_accuracies, label="Validation Accuracy")
-        # ax2.set_title("Accuracy Over Epochs")
-        # ax2.set_xlabel("Epoch")
-        # ax2.set_ylabel("Accuracy (%)")
-        # ax2.legend()
-
-        # plt.tight_layout()
-        # plt.pause(0.01)  # Pause to update the graph dynamically
-
         # Save best model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -255,8 +235,6 @@ def main(data_folder="../mva_competition",
             model_file = experiment_folder + f"/model_{epoch}.pth"
             torch.save(model.state_dict(), model_file)
     
-    # plt.show()  # Keep the plot open after training is complete
-
 
 if __name__ == "__main__":
     main()
