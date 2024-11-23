@@ -232,7 +232,7 @@ def main(data_folder="../mva_competition",
 
         # Save model periodically
         if epoch % saving_frequency == 0:
-            model_file = experiment_folder + f"/model_{epoch}.pth"
+            model_file = experiment_folder + f"/{model_name}_{epoch}.pth"
             torch.save(model.state_dict(), model_file)
     
 
