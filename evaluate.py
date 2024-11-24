@@ -15,7 +15,7 @@ def pil_loader(path):
             return img.convert("RGB")
 
 
-def main(
+def test(
         model, 
         model_name, 
         model_path,
@@ -57,7 +57,3 @@ def main(
         + outfile
         + ", you can upload this file to the kaggle competition website"
     )
-
-
-if __name__ == "__main__":
-    main()
