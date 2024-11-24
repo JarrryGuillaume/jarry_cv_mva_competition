@@ -26,9 +26,7 @@ def test(
     use_cuda = torch.cuda.is_available()
 
     # load model and transform
-    state_dict = torch.load(model)
     model, data_transforms = ModelFactory(model_name, model_path).get_all()
-    model.load_state_dict(state_dict)
     model.eval()
 
     if use_cuda:
