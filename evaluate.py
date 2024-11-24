@@ -16,7 +16,6 @@ def pil_loader(path):
 
 
 def test(
-        model, 
         model_name, 
         model_path,
         outfile, 
