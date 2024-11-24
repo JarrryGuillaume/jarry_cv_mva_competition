@@ -126,6 +126,7 @@ class ModelFactory:
                 state_dict = torch.load(self.model_path)
                 state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
                 model.load_state_dict(state_dict)
+                print("Succesfully loaded weights")
             
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
