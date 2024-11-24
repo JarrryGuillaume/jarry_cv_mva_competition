@@ -41,6 +41,16 @@ def test(
     else:
         print("Using CPU")
 
+    val_loader = torch.utils.data.DataLoader(
+        datasets.ImageFolder(data + "/val_images", transform=data_transforms["val"]),
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+    )
+
+    val_loss, val_accuracy = validation(model, val_loader, use_cuda)
+    print(f"Validation loss : {val_loss}, Validation accuracy : {val_accuracy} %")
+
     output_file = open(outfile, "w")
     output_file.write("Id,Category\n")
     for f in tqdm(os.listdir(test_dir)):
@@ -54,17 +64,6 @@ def test(
             output_file.write("%s,%d\n" % (f[:-5], pred))
 
     output_file.close()
-
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(data + "/val_images", transform=data_transforms["val"]),
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-    )
-
-    val_loss, val_accuracy = validation(model, val_loader, use_cuda)
-
-    print(f"Validation loss : {val_loss}, Validation accuracy : {val_accuracy} %")
 
     print(
         "Succesfully wrote "
