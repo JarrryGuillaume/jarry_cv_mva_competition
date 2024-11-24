@@ -4,42 +4,9 @@ import os
 import PIL.Image as Image
 import torch
 from tqdm import tqdm
-
+from torchvision import datasets
+from main import validation
 from model_factory import ModelFactory
-
-
-def opts() -> argparse.ArgumentParser:
-    """Option Handling Function."""
-    parser = argparse.ArgumentParser(description="RecVis A3 evaluation script")
-    parser.add_argument(
-        "--data",
-        type=str,
-        default="data_sketches",
-        metavar="D",
-        help="folder where data is located. test_images/ need to be found in the folder",
-    )
-    parser.add_argument(
-        "--model",
-        type=str,
-        metavar="M",
-        help="the model file to be evaluated. Usually it is of the form model_X.pth",
-    )
-    parser.add_argument(
-        "--model_name",
-        type=str,
-        default="basic_cnn",
-        metavar="MOD",
-        help="Name of the model for model and transform instantiation.",
-    )
-    parser.add_argument(
-        "--outfile",
-        type=str,
-        default="experiment/kaggle.csv",
-        metavar="D",
-        help="name of the output csv file",
-    )
-    args = parser.parse_args()
-    return args
 
 
 def pil_loader(path):
@@ -54,6 +21,8 @@ def test(
         model_path, 
         outfile, 
         data, 
+        batch_size=256, 
+        num_workers=4, 
 ) -> None:
     """Main Function."""
     # options
@@ -86,12 +55,19 @@ def test(
 
     output_file.close()
 
+    val_loader = torch.utils.data.DataLoader(
+        datasets.ImageFolder(data + "/val_images", transform=data_transforms["val"]),
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+    )
+
+    val_loss, val_accuracy = validation(model, val_loader, use_cuda)
+
+    print(f"Validation loss : {val_loss}, Validation accuracy : {val_accuracy} %")
+
     print(
         "Succesfully wrote "
         + outfile
         + ", you can upload this file to the kaggle competition website"
     )
-
-
-if __name__ == "__main__":
-    main()
