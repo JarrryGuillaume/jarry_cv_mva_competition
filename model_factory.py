@@ -130,6 +130,7 @@ class ModelFactory:
             
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
+                print("successfully parrallelized")
             return model
         
         else:
