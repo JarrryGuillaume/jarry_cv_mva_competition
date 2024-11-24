@@ -4,17 +4,19 @@ from data import data_transforms
 from model import Net
 import torch
 import torchvision
+import torch.nn as nn
 import os
 from torch.utils import model_zoo
 import timm
 
 class ModelFactory:
-    def __init__(self, model_name, model_path: str, tuning_layers=None, fine_tune=False,  num_classes=500):
+    def __init__(self, model_name, model_path: str, tuning_layers=None, fine_tune=False, hidden_size=20,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.num_classes = num_classes
         self.fine_tune = fine_tune
         self.tuning_layers = tuning_layers
+        self.hidden_size = hidden_size
         
         if torch.cuda.is_available(): 
             self.use_cuda = True
@@ -116,6 +118,13 @@ class ModelFactory:
             
             num_features = model.head.in_features
             model.head = torch.nn.Linear(num_features, self.num_classes)
+
+            model.head = nn.Sequential(
+                nn.Linear(num_features, self.hidden_size),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),
+                nn.Linear(self.hidden_size, self.num_classes)
+            )
 
             if self.fine_tune:
                 for block in model.blocks[-self.tuning_layers:]:
