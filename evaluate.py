@@ -49,19 +49,22 @@ def pil_loader(path):
             return img.convert("RGB")
 
 
-def main() -> None:
+def test(
+        model_name, 
+        model_path, 
+        outfile, 
+        data, 
+) -> None:
     """Main Function."""
     # options
-    args = opts()
-    test_dir = args.data + "/test_images/mistery_category"
+ 
+    test_dir = data + "/test_images/mistery_category"
 
     # cuda
     use_cuda = torch.cuda.is_available()
 
     # load model and transform
-    state_dict = torch.load(args.model)
-    model, data_transforms = ModelFactory(args.model_name).get_all()
-    model.load_state_dict(state_dict)
+    model, data_transforms = ModelFactory(model_name, model_path).get_all()
     model.eval()
     if use_cuda:
         print("Using GPU")
@@ -69,11 +72,11 @@ def main() -> None:
     else:
         print("Using CPU")
 
-    output_file = open(args.outfile, "w")
+    output_file = open(outfile, "w")
     output_file.write("Id,Category\n")
     for f in tqdm(os.listdir(test_dir)):
         if "jpeg" in f:
-            data = data_transforms["val"](pil_loader(test_dir + "/" + f))
+            data = data_transforms(pil_loader(test_dir + "/" + f))
             data = data.view(1, data.size(0), data.size(1), data.size(2))
             if use_cuda:
                 data = data.cuda()
@@ -85,7 +88,7 @@ def main() -> None:
 
     print(
         "Succesfully wrote "
-        + args.outfile
+        + outfile
         + ", you can upload this file to the kaggle competition website"
     )
 
