@@ -9,7 +9,7 @@ from torch.utils import model_zoo
 import timm
 
 class ModelFactory:
-    def __init__(self, model_name, model_path: str, tuning_layers, fine_tune=True,  num_classes=500):
+    def __init__(self, model_name, model_path: str, tuning_layers=None, fine_tune=False,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.num_classes = num_classes
