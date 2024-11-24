@@ -119,12 +119,6 @@ class ModelFactory:
             num_features = model.head.in_features
             model.head = torch.nn.Linear(num_features, self.num_classes)
 
-            model.head = nn.Sequential(
-                nn.Linear(num_features, self.hidden_size),
-                nn.ReLU(),
-                nn.Linear(self.hidden_size, self.num_classes)
-            )
-
             if self.fine_tune:
                 for block in model.blocks[-self.tuning_layers:]:
                     for param in block.parameters():
