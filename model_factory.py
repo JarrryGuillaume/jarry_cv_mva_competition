@@ -113,6 +113,11 @@ class ModelFactory:
             print("Using the Vision Transformer architecture.")
             # Load the pre-trained ViT-B/16 model pre-trained on ImageNet-21k
             model = timm.create_model('vit_base_patch16_224_in21k', pretrained=True)
+
+            checkpoint = torch.load(self.model_path)
+            state_dict = checkpoint["state_dict"]
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+            model.load_state_dict(state_dict)
             
             if self.fine_tune:
                 # Replace the classification head
@@ -164,6 +169,7 @@ class ModelFactory:
                     transforms.Normalize(mean=[0.485, 0.456, 0.406], 
                                         std=[0.229, 0.224, 0.225]),
                 ]),
+                
             }
         return data_transforms
 
