@@ -113,11 +113,6 @@ class ModelFactory:
             print("Using the Vision Transformer architecture.")
             # Load the pre-trained ViT-B/16 model pre-trained on ImageNet-21k
             model = timm.create_model('vit_base_patch16_224_in21k', pretrained=True)
-
-            checkpoint = torch.load(self.model_path)
-            state_dict = checkpoint["state_dict"]
-            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-            model.load_state_dict(state_dict)
             
             num_features = model.head.in_features
             model.head = torch.nn.Linear(num_features, self.num_classes)
