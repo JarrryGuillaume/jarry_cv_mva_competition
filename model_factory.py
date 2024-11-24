@@ -122,7 +122,6 @@ class ModelFactory:
             model.head = nn.Sequential(
                 nn.Linear(num_features, self.hidden_size),
                 nn.ReLU(),
-                nn.Dropout(p=0.5),
                 nn.Linear(self.hidden_size, self.num_classes)
             )
 
