@@ -119,14 +119,18 @@ class ModelFactory:
             state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
             model.load_state_dict(state_dict)
             
-            if self.fine_tune:
-                # Replace the classification head
-                num_features = model.head.in_features
-                model.head = torch.nn.Linear(num_features, self.num_classes)
+            num_features = model.head.in_features
+            model.head = torch.nn.Linear(num_features, self.num_classes)
 
+            if self.fine_tune:
                 for block in model.blocks[-self.tuning_layers:]:
                     for param in block.parameters():
                         param.requires_grad = True
+            
+            if self.model_path is not None: 
+                state_dict = torch.load(self.model_path)
+                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+                model.load_state_dict(state_dict)
             
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
