@@ -19,6 +19,7 @@ def pil_loader(path):
 def test(
         model_name, 
         model_path, 
+        model_type,
         outfile, 
         data, 
         batch_size=256, 
@@ -34,7 +35,7 @@ def test(
     use_cuda = torch.cuda.is_available()
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_path, hidden_size=hidden_size).get_all()
+    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, hidden_size=hidden_size).get_all()
     model.eval()
     if use_cuda:
         print("Using GPU")

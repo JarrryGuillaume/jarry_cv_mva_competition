@@ -10,9 +10,10 @@ from torch.utils import model_zoo
 import timm
 
 class ModelFactory:
-    def __init__(self, model_name, model_path: str, tuning_layers=None, fine_tune=False, hidden_size=20,  num_classes=500):
+    def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=20,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
+        self.model_type = model_type
         self.num_classes = num_classes
         self.fine_tune = fine_tune
         self.tuning_layers = tuning_layers
@@ -114,7 +115,7 @@ class ModelFactory:
         elif "vit" in self.model_name.lower():
             print("Using the Vision Transformer architecture.")
             # Load the pre-trained ViT-B/16 model pre-trained on ImageNet-21k
-            model = timm.create_model('vit_base_patch16_224_in21k', pretrained=True)
+            model = timm.create_model(self.model_type, pretrained=True)
             
             num_features = model.head.in_features
             model.head = torch.nn.Linear(num_features, self.num_classes)

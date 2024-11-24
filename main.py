@@ -80,6 +80,7 @@ def main(data_folder="../mva_competition",
             experiment_folder="../experiment",
             model_name="basic",
             model_path=None, 
+            model_type=None,
             batch_size=32,
             num_workers=4,
             momentum=0.5,
@@ -104,7 +105,7 @@ def main(data_folder="../mva_competition",
         os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_path, tuning_layers, hidden_size=hidden_layers, fine_tune=fine_tune).get_all()
+    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, tuning_layers=tuning_layers, hidden_size=hidden_layers, fine_tune=fine_tune).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
