@@ -25,6 +25,7 @@ def test(
         batch_size=256, 
         num_workers=4, 
         hidden_size=30,
+        dropout=0.2
 ) -> None:
     """Main Function."""
     # options
@@ -35,7 +36,7 @@ def test(
     use_cuda = torch.cuda.is_available()
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, hidden_size=hidden_size).get_all()
+    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, dropout=dropout, hidden_size=hidden_size).get_all()
     model.eval()
     if use_cuda:
         print("Using GPU")

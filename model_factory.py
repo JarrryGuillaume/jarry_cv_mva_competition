@@ -10,7 +10,7 @@ from torch.utils import model_zoo
 import timm
 
 class ModelFactory:
-    def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None,  num_classes=500):
+    def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None, dropout=0.2,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.model_type = model_type
@@ -18,6 +18,7 @@ class ModelFactory:
         self.fine_tune = fine_tune
         self.tuning_layers = tuning_layers
         self.hidden_size = hidden_size
+        self.dropout = dropout
         
         if torch.cuda.is_available(): 
             self.use_cuda = True
@@ -103,7 +104,7 @@ class ModelFactory:
             num_features = model.head.in_features
             model.head = nn.Sequential(
                     nn.Linear(num_features, self.num_classes),
-                    nn.Dropout(p=0.5),
+                    nn.Dropout(p=self.dropout),
                 )
 
             if self.hidden_size is not None: 

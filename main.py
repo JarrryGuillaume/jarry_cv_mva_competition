@@ -94,6 +94,7 @@ def main(data_folder="../mva_competition",
             optimizer="SGD", 
             hidden_layers=30,
             weight_decay=1e-4,
+            dropout=0.2, 
             tuning_layers=None):
     """Default Main Function."""
     # Check if cuda is available
@@ -107,7 +108,7 @@ def main(data_folder="../mva_competition",
         os.makedirs(experiment_folder)
 
     # load model and transform
-    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, tuning_layers=tuning_layers, hidden_size=hidden_layers, fine_tune=fine_tune).get_all()
+    model, data_transforms = ModelFactory(model_name, model_type=model_type, model_path=model_path, tuning_layers=tuning_layers, hidden_size=hidden_layers, dropout=dropout, fine_tune=fine_tune).get_all()
     if use_cuda:
         print("Using GPU")
         model.cuda()
