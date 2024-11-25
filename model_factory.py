@@ -10,7 +10,7 @@ from torch.utils import model_zoo
 import timm
 
 class ModelFactory:
-    def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=20,  num_classes=500):
+    def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None,  num_classes=500):
         self.model_name = model_name
         self.model_path = model_path
         self.model_type = model_type
@@ -101,7 +101,10 @@ class ModelFactory:
             model = timm.create_model(self.model_type, pretrained=True)
             
             num_features = model.head.in_features
-            model.head = torch.nn.Linear(num_features, self.num_classes)
+            model.head = nn.Sequential(
+                    nn.Linear(num_features, self.num_classes),
+                    nn.Dropout(p=0.5),
+                )
 
             if self.hidden_size is not None: 
                 model.head = nn.Sequential(
@@ -134,16 +137,22 @@ class ModelFactory:
         if "vit" in self.model_name.lower():
             data_transforms = {
                 "train": transforms.Compose([
-                    transforms.RandomResizedCrop(224),
+                    transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),  # Random crop with scaling
                     transforms.RandomHorizontalFlip(),
+                    transforms.RandomRotation(degrees=15),
+                    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                    transforms.RandomGrayscale(p=0.1),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                        std=[0.5, 0.5, 0.5]),
+                    transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
                 ]),
                 "val": transforms.Compose([
                     transforms.Resize(256),
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                        std=[0.5, 0.5, 0.5]),
                 ]),
             }
         else:

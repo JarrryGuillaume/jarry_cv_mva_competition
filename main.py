@@ -25,7 +25,7 @@ def train(
             data, target = data.cuda(), target.cuda()
         optimizer.zero_grad()
         output = model(data)
-        criterion = torch.nn.CrossEntropyLoss(reduction="mean")
+        criterion = torch.nn.CrossEntropyLoss(reduction="mean", label_smoothing=0.1)
         loss = criterion(output, target)
         total_loss += loss.item()
         loss.backward()
@@ -65,7 +65,7 @@ def validation(
             data, target = data.cuda(), target.cuda()
         output = model(data)
         # sum up batch loss
-        criterion = torch.nn.CrossEntropyLoss(reduction="mean")
+        criterion = torch.nn.CrossEntropyLoss(reduction="mean", label_smoothing=0.1)
         validation_loss += criterion(output, target).item()
         # get the index of the max log-probability
         pred = output.data.max(1, keepdim=True)[1]
@@ -86,12 +86,14 @@ def main(data_folder="../mva_competition",
             momentum=0.5,
             epochs=100,
             seed=42,
-            lr=1e-3,
+            lr_head=1e-3,
+            lr_body=1e-3, 
             saving_frequency=5,
             log_interval=10, 
             fine_tune=True, 
             optimizer="SGD", 
             hidden_layers=30,
+            weight_decay=1e-4,
             tuning_layers=None):
     """Default Main Function."""
     # Check if cuda is available
@@ -128,9 +130,12 @@ def main(data_folder="../mva_competition",
 
     # Setup optimizer
     if optimizer == "SGD":
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+        optimizer = optim.SGD(model.parameters(), lr=lr_head, momentum=momentum)
     elif optimizer == "AdamW": 
-        optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+        optimizer = optim.AdamW([
+            {'params': model.head.parameters(), 'lr': lr_head},
+            {'params': model.blocks[-tuning_layers:].parameters(), 'lr': lr_body}
+        ], weight_decay=weight_decay)
 
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
