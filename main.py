@@ -133,8 +133,8 @@ def main(data_folder="../mva_competition",
         optimizer = optim.SGD(model.parameters(), lr=lr_head, momentum=momentum)
     elif optimizer == "AdamW": 
         optimizer = optim.AdamW([
-            {'params': model.head.parameters(), 'lr': lr_head},
-            {'params': model.blocks[-tuning_layers:].parameters(), 'lr': lr_body}
+            {'params': model.module.head.parameters(), 'lr': lr_head},
+            {'params': model.module.blocks[-tuning_layers:].parameters(), 'lr': lr_body}
         ], weight_decay=weight_decay)
 
     train_losses, val_losses = [], []
