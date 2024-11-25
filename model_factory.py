@@ -32,24 +32,7 @@ class ModelFactory:
     def init_model(self):
         if self.model_name == "basic":
             return Net()
-        elif "resnet50" in self.model_name:
-            print("Using the ResNet50 architecture.")
-            model = torchvision.models.resnet50(pretrained=False)
-            checkpoint = torch.load(self.model_path, map_location=self.map_location)
-
-            state_dict = checkpoint["state_dict"]
-            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-
-            model.load_state_dict(state_dict=state_dict)
-
-            if self.fine_tune:
-                num_features = model.fc.in_features
-                model.fc = torch.nn.Linear(num_features, self.num_classes)
-
-            if self.use_cuda:
-                model = torch.nn.DataParallel(model).cuda()
-            return model
-
+        
         elif "vgg16" in self.model_name:
 
             print("Using the VGG-16 architecture.")
@@ -127,7 +110,6 @@ class ModelFactory:
                     nn.Dropout(p=0.5),
                     nn.Linear(self.hidden_size, self.num_classes)
                 )
-
 
             if self.fine_tune:
                 for block in model.blocks[-self.tuning_layers:]:
