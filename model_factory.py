@@ -9,31 +9,6 @@ import os
 from torch.utils import model_zoo
 import timm
 import torchvision.models as models
-import torchvision.transforms.functional as TF
-import kornia.augmentation as K
-
-# Define the augmentation pipeline
-class KorniaAugmentation:
-    def __init__(self):
-        self.transforms = torch.nn.Sequential(
-            K.RandomAffine(degrees=15, shear=10),
-            K.RandomPerspective(distortion_scale=0.5, p=0.5),
-            K.RandomElasticTransform(alpha=50.0, sigma=5.0, p=0.5),
-            K.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-            K.RandomGrayscale(p=0.1),
-            K.RandomErasing(p=0.5, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
-        )
-
-    def __call__(self, img):
-        # Convert PIL image to tensor and add batch dimension
-        img = TF.to_tensor(img).unsqueeze(0)
-        # Apply the transforms
-        img = self.transforms(img)
-        # Remove batch dimension and convert back to PIL Image
-        img = img.squeeze(0)
-        img = TF.to_pil_image(img)
-        return img
-
 
 class ModelFactory:
     def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None, dropout=0.2,  num_classes=500):
@@ -199,13 +174,19 @@ class ModelFactory:
 
     def init_transform(self):
         if "vit" in self.model_name.lower():
-            # Add it to your transforms.Compose
             data_transforms = {
                 "train": transforms.Compose([
-                    KorniaAugmentation(),
+                    transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),  # Random crop with scaling
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomRotation(degrees=15),
+                    transforms.RandomPerspective(distortion_scale=0.5, p=0.5),
+                    transforms.RandomAffine(degrees=0, shear=10),
+                    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                    transforms.RandomGrayscale(p=0.1),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.5, 0.5, 0.5],
                                         std=[0.5, 0.5, 0.5]),
+                    transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
                 ]),
                 "val": transforms.Compose([
                     transforms.Resize(256),
