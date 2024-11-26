@@ -9,6 +9,31 @@ import os
 from torch.utils import model_zoo
 import timm
 import torchvision.models as models
+import torchvision.transforms.functional as TF
+import kornia.augmentation as K
+
+# Define the augmentation pipeline
+class KorniaAugmentation:
+    def __init__(self):
+        self.transforms = torch.nn.Sequential(
+            K.RandomAffine(degrees=15, shear=10),
+            K.RandomPerspective(distortion_scale=0.5, p=0.5),
+            K.RandomElasticTransform(alpha=50.0, sigma=5.0, p=0.5),
+            K.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+            K.RandomGrayscale(p=0.1),
+            K.RandomErasing(p=0.5, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
+        )
+
+    def __call__(self, img):
+        # Convert PIL image to tensor and add batch dimension
+        img = TF.to_tensor(img).unsqueeze(0)
+        # Apply the transforms
+        img = self.transforms(img)
+        # Remove batch dimension and convert back to PIL Image
+        img = img.squeeze(0)
+        img = TF.to_pil_image(img)
+        return img
+
 
 class ModelFactory:
     def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None, dropout=0.2,  num_classes=500):
@@ -73,7 +98,7 @@ class ModelFactory:
                 state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
                 model.load_state_dict(state_dict)
                 print("Succesfully loaded weights")
-                
+
             print("SqsueezeNet used")
             return model
 
@@ -97,16 +122,13 @@ class ModelFactory:
                 for name, param in model.named_parameters():
                     param.requires_grad = False
 
-                # Unfreeze layers 26 and 28 in the features module
                 for layer in self.tuning_layers: 
                     print(f"layers modified : {layer}")
                     model.features[layer].requires_grad_(True)
 
-                # Unfreeze the last three linear layers in the classifier
-                for i in [0, 3, 6]:  # Layers 0, 3, 6 in the classifier
+                for i in [0, 3, 6]: 
                     model.classifier[i].requires_grad_(True)
 
-                # Replace the classifier output layer
                 num_features = model.classifier[6].in_features
                 model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
@@ -177,17 +199,13 @@ class ModelFactory:
 
     def init_transform(self):
         if "vit" in self.model_name.lower():
+            # Add it to your transforms.Compose
             data_transforms = {
                 "train": transforms.Compose([
-                    transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),  # Random crop with scaling
-                    transforms.RandomHorizontalFlip(),
-                    transforms.RandomRotation(degrees=15),
-                    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-                    transforms.RandomGrayscale(p=0.1),
+                    KorniaAugmentation(),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.5, 0.5, 0.5],
                                         std=[0.5, 0.5, 0.5]),
-                    transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
                 ]),
                 "val": transforms.Compose([
                     transforms.Resize(256),
@@ -218,17 +236,17 @@ class ModelFactory:
         else:
             data_transforms = {
                 "train": transforms.Compose([
-                    transforms.Resize((256, 256)),                # Ensure consistent input size
-                    transforms.RandomCrop((224, 224)),           # Random crop while keeping most of the object
-                    transforms.RandomHorizontalFlip(),           # Simulate horizontal flipping
+                    transforms.Resize((256, 256)),                
+                    transforms.RandomCrop((224, 224)),           
+                    transforms.RandomHorizontalFlip(),           
                     transforms.RandomRotation(degrees=15),
-                    transforms.RandomRotation(degrees=30),       # Small random rotations for variability
-                    transforms.ToTensor(),                       # Convert to PyTorch tensor
+                    transforms.RandomRotation(degrees=30),       
+                    transforms.ToTensor(),                      
                     transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                        std=[0.229, 0.224, 0.225]),  # Normalize
+                                        std=[0.229, 0.224, 0.225]), 
                 ]),
                 "val": transforms.Compose([
-                    transforms.Resize((224, 224)),               # Resize directly for validation
+                    transforms.Resize((224, 224)),               
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.485, 0.456, 0.406], 
                                         std=[0.229, 0.224, 0.225]),
