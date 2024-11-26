@@ -137,6 +137,8 @@ def main(data_folder="../mva_competition",
             {'params': model.module.head.parameters(), 'lr': lr_head},
             {'params': model.module.blocks[-tuning_layers:].parameters(), 'lr': lr_body}
         ], weight_decay=weight_decay)
+    elif optimizer == "Adam": 
+        optimizer = optim.Adam(model.parameters(), lr=lr_body, weight_decay=weight_decay)
 
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
