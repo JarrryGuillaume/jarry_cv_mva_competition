@@ -39,18 +39,21 @@ class ModelFactory:
             model = models.efficientnet_b0(pretrained=False, num_classes=self.num_classes) 
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
+            print("efficientNet used")
             return model
             
         elif "mobileNet" in self.model_name: 
             model = models.mobilenet_v2(pretrained=False, num_classes=self.num_classes)
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
+            print("mobileNet used")
             return model
         
         elif "squeezeNet" in self.model_name: 
             model = models.squeezenet1_0(pretrained=False, num_classes=self.num_classes)
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
+            print("SqsueezeNet used")
             return model
 
         elif "vgg16" in self.model_name:
