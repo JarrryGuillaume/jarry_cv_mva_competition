@@ -8,6 +8,7 @@ import torch.nn as nn
 import os
 from torch.utils import model_zoo
 import timm
+import torchvision.models as models
 
 class ModelFactory:
     def __init__(self, model_name, model_type=None, model_path=None, tuning_layers=None, fine_tune=False, hidden_size=None, dropout=0.2,  num_classes=500):
@@ -34,6 +35,24 @@ class ModelFactory:
         if self.model_name == "basic":
             return Net()
         
+        elif "efficientNet" in self.model_name:
+            model = models.efficientnet_b0(pretrained=False, num_classes=self.num_classes) 
+            if self.use_cuda:
+                model = torch.nn.DataParallel(model).cuda()
+            return model
+            
+        elif "mobileNet" in self.model_name: 
+            model = models.mobilenet_v2(pretrained=False, num_classes=self.num_classes)
+            if self.use_cuda:
+                model = torch.nn.DataParallel(model).cuda()
+            return model
+        
+        elif "squeezeNet" in self.model_name: 
+            model = models.squeezenet1_0(pretrained=False, num_classes=self.num_classes)
+            if self.use_cuda:
+                model = torch.nn.DataParallel(model).cuda()
+            return model
+
         elif "vgg16" in self.model_name:
 
             print("Using the VGG-16 architecture.")
@@ -92,7 +111,6 @@ class ModelFactory:
                 model.classifier[6] = torch.nn.Linear(num_features, self.num_classes)
 
             if self.use_cuda:
-                model.features = torch.nn.DataParallel(model.features).cuda()
                 model = torch.nn.DataParallel(model).cuda()
             return model
     
@@ -128,7 +146,6 @@ class ModelFactory:
             
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
-                print("successfully parrallelized")
             return model
         
         else:
@@ -154,6 +171,24 @@ class ModelFactory:
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.5, 0.5, 0.5],
                                         std=[0.5, 0.5, 0.5]),
+                ]),
+            }
+        elif "efficientNet" in self.model_name or "squeezeNet" in self.model_name or "mobileNet" in self.model_name: 
+            data_transforms = {
+                'train': transforms.Compose([
+                    transforms.RandomResizedCrop(224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomRotation(15),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                        std=[0.229, 0.224, 0.225]),
+                ]),
+                'val': transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                        std=[0.229, 0.224, 0.225]),
                 ]),
             }
         else:
