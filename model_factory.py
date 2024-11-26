@@ -37,6 +37,13 @@ class ModelFactory:
         
         elif "efficientNet" in self.model_name:
             model = models.efficientnet_b0(pretrained=False, num_classes=self.num_classes) 
+
+            if self.model_path is not None: 
+                state_dict = torch.load(self.model_path)
+                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+                model.load_state_dict(state_dict)
+                print("Succesfully loaded weights")
+
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
             print("efficientNet used")
@@ -44,6 +51,13 @@ class ModelFactory:
             
         elif "mobileNet" in self.model_name: 
             model = models.mobilenet_v2(pretrained=False, num_classes=self.num_classes)
+
+            if self.model_path is not None: 
+                state_dict = torch.load(self.model_path)
+                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+                model.load_state_dict(state_dict)
+                print("Succesfully loaded weights")
+
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
             print("mobileNet used")
@@ -53,6 +67,13 @@ class ModelFactory:
             model = models.squeezenet1_0(pretrained=False, num_classes=self.num_classes)
             if self.use_cuda:
                 model = torch.nn.DataParallel(model).cuda()
+
+            if self.model_path is not None: 
+                state_dict = torch.load(self.model_path)
+                state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+                model.load_state_dict(state_dict)
+                print("Succesfully loaded weights")
+                
             print("SqsueezeNet used")
             return model
 
